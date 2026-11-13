@@ -33,24 +33,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shell: [powershell, pwsh]
+        # Executable to run the tests with. "shell:" cannot take a matrix
+        # expression, so the step always starts in pwsh and launches this.
+        edition: [powershell, pwsh]
     steps:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - name: Run Pester (${{ matrix.shell }})
-        shell: ${{ matrix.shell }}
-        run: |
-          $ErrorActionPreference = 'Stop'
-          # Windows PowerShell 5.1 can default to old TLS versions for the Gallery.
-          [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-          $version = '5.9.1'
-          # SkipPublisherCheck: the inbox Pester 3.4 on Windows is signed by a different publisher.
-          Install-Module Pester -RequiredVersion $version -Force -Scope CurrentUser -SkipPublisherCheck
-          Import-Module Pester -RequiredVersion $version -Force
-          Write-Output "PowerShell $($PSVersionTable.PSVersion), Pester $version"
-          $config = New-PesterConfiguration
-          $config.Run.Path = './tests'
-          $config.Run.Exit = $true
-          $config.Output.Verbosity = 'Detailed'
-          Invoke-Pester -Configuration $config
+      - name: Run Pester (${{ matrix.edition }})
+        shell: pwsh
+        run: ${{ matrix.edition }} -NoProfile -NonInteractive -File ./build/Invoke-Tests.ps1

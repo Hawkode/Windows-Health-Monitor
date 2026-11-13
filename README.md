@@ -172,7 +172,7 @@ Install-Module PSScriptAnalyzer -RequiredVersion 1.23.0 -Scope CurrentUser
 Invoke-ScriptAnalyzer -Path . -Recurse -Settings .\PSScriptAnalyzerSettings.psd1
 Invoke-Pester .\tests -Output Detailed
 ```
-Run Pester elevated to include the event log and ACL tests. Unelevated, they are skipped.
+Or run `.\build\Invoke-Tests.ps1`, which installs the pinned Pester and runs the suite the same way CI does. Run Pester elevated to include the event log and ACL tests. Unelevated, they are skipped.
 
 Unit tests use the JSON snapshots in `tests\fixtures\`, so the evaluation logic is tested without depending on the state of the test machine.
 
