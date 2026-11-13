@@ -302,14 +302,17 @@ Describe 'Windows host, elevated' -Skip:(-not $script:elevated) {
     It 'accepts an admin-only, admin-owned module folder (-WhatIf, nothing registered)' {
         $dir = Join-Path -Path $TestDrive -ChildPath 'module-strong'
         $null = New-Item -Path $dir -ItemType Directory -Force
-        $null = & icacls.exe $dir /setowner '*S-1-5-32-544' /T /C /Q
-        $null = & icacls.exe $dir /inheritance:r /grant:r '*S-1-5-18:(OI)(CI)F' '*S-1-5-32-544:(OI)(CI)F' '*S-1-5-32-545:(OI)(CI)RX' /Q
-        InModuleScope WindowsHealthMonitor -Parameters @{ Dir = $dir } {
-            param($Dir)
+        $ownerOut = & icacls.exe $dir /setowner '*S-1-5-32-544' /T /C 2>&1 | Out-String
+        $LASTEXITCODE | Should -Be 0 -Because "icacls /setowner output: $ownerOut"
+        $grantOut = & icacls.exe $dir /inheritance:r /grant:r '*S-1-5-18:(OI)(CI)F' '*S-1-5-32-544:(OI)(CI)F' '*S-1-5-32-545:(OI)(CI)RX' 2>&1 | Out-String
+        $LASTEXITCODE | Should -Be 0 -Because "icacls /grant output: $grantOut"
+        $aclNow = & icacls.exe $dir 2>&1 | Out-String
+        InModuleScope WindowsHealthMonitor -Parameters @{ Dir = $dir; AclNow = $aclNow } {
+            param($Dir, $AclNow)
             $saved = $script:WhmModuleRoot
             try {
                 $script:WhmModuleRoot = $Dir
-                { Register-HealthMonitorTask -WhatIf -OutputPath (Join-Path -Path $Dir -ChildPath 'out') } | Should -Not -Throw
+                { Register-HealthMonitorTask -WhatIf -OutputPath (Join-Path -Path $Dir -ChildPath 'out') } | Should -Not -Throw -Because "ACL after setup: $AclNow"
             }
             finally {
                 $script:WhmModuleRoot = $saved

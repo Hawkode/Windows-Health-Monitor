@@ -43,12 +43,12 @@ function Get-HealthSnapshot {
     $firewall = Invoke-WhmCollector -Name 'Firewall' -ErrorList $collectorErrors -ScriptBlock { Get-WhmFirewall }
     $pendingReboot = Invoke-WhmCollector -Name 'PendingReboot' -ErrorList $collectorErrors -ScriptBlock { Get-WhmPendingReboot }
     $patch = Invoke-WhmCollector -Name 'Patch' -ErrorList $collectorErrors -ScriptBlock { Get-WhmPatch }
-    $logClear = Invoke-WhmCollector -Name 'LogClear' -ErrorList $collectorErrors -ScriptBlock { Get-WhmLogClear -LookbackHours $LogClearLookbackHours }
+    $logClear = Invoke-WhmCollector -Name 'LogClear' -ErrorList $collectorErrors -ScriptBlock { param($Hours) Get-WhmLogClear -LookbackHours $Hours } -ArgumentList $LogClearLookbackHours
     $bitLocker = Invoke-WhmCollector -Name 'BitLocker' -ErrorList $collectorErrors -ScriptBlock { Get-WhmBitLocker }
 
     $topProcesses = @()
     if ($TopProcessCount -gt 0) {
-        $topProcesses = Invoke-WhmCollector -Name 'TopProcesses' -ErrorList $collectorErrors -ScriptBlock { Get-WhmTopProcess -Count $TopProcessCount }
+        $topProcesses = Invoke-WhmCollector -Name 'TopProcesses' -ErrorList $collectorErrors -ScriptBlock { param($N) Get-WhmTopProcess -Count $N } -ArgumentList $TopProcessCount
     }
 
     # Collectors that emit several objects come back unrolled. Force arrays,
@@ -57,11 +57,18 @@ function Get-HealthSnapshot {
     if ($null -ne $firewall) { $firewall = @($firewall) }
     if ($null -ne $topProcesses) { $topProcesses = @($topProcesses) }
 
+    # Compute values into variables before building the object. A command
+    # call as a hashtable value failed here with "Argument types do not
+    # match" in CI (both editions) when the function's OutputType is [bool].
+    $timestampUtc = ConvertTo-WhmIsoTime -Value (Get-Date)
+    $isElevated = [bool](Test-WhmElevated)
+    $errorsOut = @($collectorErrors)
+
     [pscustomobject]@{
         SchemaVersion   = 1
-        TimestampUtc    = ConvertTo-WhmIsoTime -Value (Get-Date)
+        TimestampUtc    = $timestampUtc
         ComputerName    = $env:COMPUTERNAME
-        IsElevated      = Test-WhmElevated
+        IsElevated      = $isElevated
         Cpu             = $cpu
         Memory          = $memory
         Disks           = $disks
@@ -74,6 +81,6 @@ function Get-HealthSnapshot {
         Patch           = $patch
         LogClear        = $logClear
         BitLocker       = $bitLocker
-        CollectorErrors = @($collectorErrors)
+        CollectorErrors = $errorsOut
     }
 }

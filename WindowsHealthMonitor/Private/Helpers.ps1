@@ -81,11 +81,12 @@ function Invoke-WhmCollector {
     param(
         [Parameter(Mandatory)][string]$Name,
         [Parameter(Mandatory)][scriptblock]$ScriptBlock,
-        [Parameter(Mandatory)][AllowEmptyCollection()][System.Collections.Generic.List[object]]$ErrorList
+        [Parameter(Mandatory)][AllowEmptyCollection()][System.Collections.Generic.List[object]]$ErrorList,
+        [object[]]$ArgumentList = @()
     )
     $ErrorActionPreference = 'Stop'
     try {
-        & $ScriptBlock
+        & $ScriptBlock @ArgumentList
     }
     catch {
         $ErrorList.Add([pscustomobject]@{

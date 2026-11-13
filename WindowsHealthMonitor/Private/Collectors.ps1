@@ -187,12 +187,14 @@ function Get-WhmLogClear {
     param([Parameter(Mandatory)][ValidateRange(1, 720)][int]$LookbackHours)
     if (-not (Test-WhmElevated)) { throw 'Reading the Security log requires an elevated session.' }
     $since = (Get-Date).AddHours(-1 * $LookbackHours)
+    # EID 1102: "The audit log was cleared" (Security log).
+    $securityCleared = [int](Get-WhmEventCount -LogName 'Security' -Id 1102 -Since $since)
+    # EID 104: "The <name> log file was cleared" (any other log, in System).
+    $otherCleared = [int](Get-WhmEventCount -LogName 'System' -Id 104 -Since $since)
     [pscustomobject]@{
         LookbackHours      = $LookbackHours
-        # EID 1102: "The audit log was cleared" (Security log).
-        SecurityLogCleared = Get-WhmEventCount -LogName 'Security' -Id 1102 -Since $since
-        # EID 104: "The <name> log file was cleared" (any other log, in System).
-        OtherLogCleared    = Get-WhmEventCount -LogName 'System' -Id 104 -Since $since
+        SecurityLogCleared = $securityCleared
+        OtherLogCleared    = $otherCleared
     }
 }
 
