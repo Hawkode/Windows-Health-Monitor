@@ -57,12 +57,11 @@ function Get-HealthSnapshot {
     if ($null -ne $firewall) { $firewall = @($firewall) }
     if ($null -ne $topProcesses) { $topProcesses = @($topProcesses) }
 
-    # Compute values into variables before building the object. A command
-    # call as a hashtable value failed here with "Argument types do not
-    # match" in CI (both editions) when the function's OutputType is [bool].
     $timestampUtc = ConvertTo-WhmIsoTime -Value (Get-Date)
     $isElevated = [bool](Test-WhmElevated)
-    $errorsOut = @($collectorErrors)
+    # ToArray(), not @($collectorErrors): @() over this generic List threw
+    # "Argument types do not match" in CI on both 5.1 and 7.
+    $errorsOut = $collectorErrors.ToArray()
 
     [pscustomobject]@{
         SchemaVersion   = 1

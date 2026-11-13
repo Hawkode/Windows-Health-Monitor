@@ -99,10 +99,7 @@ function Register-HealthMonitorTask {
     if (-not (Test-Path -LiteralPath $OutputPath -PathType Container)) {
         $null = New-Item -Path $OutputPath -ItemType Directory -Force
     }
-    $null = & icacls.exe $OutputPath /inheritance:r /grant:r '*S-1-5-18:(OI)(CI)F' '*S-1-5-32-544:(OI)(CI)F' '*S-1-5-32-545:(OI)(CI)RX'
-    if ($LASTEXITCODE -ne 0) { throw "icacls failed to set permissions on $OutputPath (exit code $LASTEXITCODE)." }
-    $null = & icacls.exe $OutputPath /setowner '*S-1-5-32-544' /T /C /Q
-    if ($LASTEXITCODE -ne 0) { throw "icacls failed to set the owner on $OutputPath (exit code $LASTEXITCODE)." }
+    Protect-WhmPath -Path $OutputPath
 
     Register-WhmEventSource -Source $script:WhmEventSource
 

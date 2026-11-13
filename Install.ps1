@@ -59,13 +59,11 @@ if ($ThresholdPath) {
 # Files from a downloaded zip carry Zone.Identifier, which RemoteSigned blocks.
 Get-ChildItem -LiteralPath $root -Recurse -File | Unblock-File
 
-# Owner first, then a clean ACL on the root, then make every child inherit only from it.
-$null = & icacls.exe $root /setowner '*S-1-5-32-544' /T /C /Q
-if ($LASTEXITCODE -ne 0) { throw "icacls /setowner failed (exit code $LASTEXITCODE)." }
-$null = & icacls.exe $root /inheritance:r /grant:r '*S-1-5-18:(OI)(CI)F' '*S-1-5-32-544:(OI)(CI)F' '*S-1-5-32-545:(OI)(CI)RX' /Q
-if ($LASTEXITCODE -ne 0) { throw "icacls /grant failed (exit code $LASTEXITCODE)." }
-$null = & icacls.exe (Join-Path -Path $root -ChildPath '*') /reset /T /C /Q
-if ($LASTEXITCODE -ne 0) { throw "icacls /reset failed (exit code $LASTEXITCODE)." }
+# Same ACL code the module uses for its output folder, and the code CI tests:
+# owner Administrators everywhere, exact protected DACL on the root, children
+# inherit only from it. Runs in the module's scope because it is private.
+$installed = Import-Module -Name (Join-Path -Path $target -ChildPath 'WindowsHealthMonitor.psd1') -Force -PassThru
+& $installed { param($p) Protect-WhmPath -Path $p } $root
 
 Write-Output "Installed to $target"
 Write-Output 'Next: Import-Module WindowsHealthMonitor; Get-HealthSnapshot | Test-HealthSnapshot | Format-Table Check, Target, Status, Message -AutoSize'

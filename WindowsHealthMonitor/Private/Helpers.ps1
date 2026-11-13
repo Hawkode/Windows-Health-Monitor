@@ -307,6 +307,40 @@ function Get-WhmUntrustedWriteAccess {
     }
 }
 
+function Protect-WhmPath {
+    # Makes a folder tree admin-only: owner BUILTIN\Administrators on every
+    # item, and on the root an exact, protected DACL (SYSTEM and Administrators
+    # full control, Users read and execute) that children inherit.
+    # The DACL is set exactly (SDDL) because icacls /inheritance:r plus
+    # /grant:r only removes inherited entries and replaces the SIDs it names:
+    # an explicit entry for any other account (for example the admin who
+    # created the folder) survives, and the folder stays writable by it.
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$Path)
+
+    $item = Get-Item -LiteralPath $Path -Force -ErrorAction Stop
+    if (-not $item.PSIsContainer) { throw "Protect-WhmPath expects a folder: $Path" }
+
+    $ownerOut = & icacls.exe $item.FullName /setowner '*S-1-5-32-544' /T /C /Q 2>&1 | Out-String
+    if ($LASTEXITCODE -ne 0) { throw "icacls /setowner failed on $($item.FullName) (exit code $LASTEXITCODE): $ownerOut" }
+
+    # Exact descriptor for the root:
+    #   O:BA  owner BUILTIN\Administrators
+    #   D:PAI protected DACL (no inheritance from the parent)
+    #   SYSTEM and Administrators full control, Users read and execute
+    #   (0x1200a9), all inherited by subfolders and files (OICI).
+    $sddl = 'O:BAD:PAI(A;OICI;FA;;;SY)(A;OICI;FA;;;BA)(A;OICI;0x1200a9;;;BU)'
+    $security = Get-Acl -LiteralPath $item.FullName
+    $security.SetSecurityDescriptorSddlForm($sddl, [System.Security.AccessControl.AccessControlSections]'Owner, Access')
+    Set-Acl -LiteralPath $item.FullName -AclObject $security
+
+    # Children: drop any explicit entries and inherit only from the root.
+    if (@(Get-ChildItem -LiteralPath $item.FullName -Force).Count -gt 0) {
+        $resetOut = & icacls.exe (Join-Path -Path $item.FullName -ChildPath '*') /reset /T /C /Q 2>&1 | Out-String
+        if ($LASTEXITCODE -ne 0) { throw "icacls /reset failed under $($item.FullName) (exit code $LASTEXITCODE): $resetOut" }
+    }
+}
+
 function Test-WhmEventSource {
     # Registry check instead of [EventLog]::SourceExists, which throws for
     # non-admins because it also searches the Security log.

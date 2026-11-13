@@ -302,17 +302,20 @@ Describe 'Windows host, elevated' -Skip:(-not $script:elevated) {
     It 'accepts an admin-only, admin-owned module folder (-WhatIf, nothing registered)' {
         $dir = Join-Path -Path $TestDrive -ChildPath 'module-strong'
         $null = New-Item -Path $dir -ItemType Directory -Force
-        $ownerOut = & icacls.exe $dir /setowner '*S-1-5-32-544' /T /C 2>&1 | Out-String
-        $LASTEXITCODE | Should -Be 0 -Because "icacls /setowner output: $ownerOut"
-        $grantOut = & icacls.exe $dir /inheritance:r /grant:r '*S-1-5-18:(OI)(CI)F' '*S-1-5-32-544:(OI)(CI)F' '*S-1-5-32-545:(OI)(CI)RX' 2>&1 | Out-String
-        $LASTEXITCODE | Should -Be 0 -Because "icacls /grant output: $grantOut"
-        $aclNow = & icacls.exe $dir 2>&1 | Out-String
-        InModuleScope WindowsHealthMonitor -Parameters @{ Dir = $dir; AclNow = $aclNow } {
-            param($Dir, $AclNow)
+        # A child with an explicit Users grant, which Protect-WhmPath must remove.
+        $child = Join-Path -Path $dir -ChildPath 'Private'
+        $null = New-Item -Path $child -ItemType Directory -Force
+        $null = & icacls.exe $child /grant '*S-1-5-32-545:(OI)(CI)M'
+        InModuleScope WindowsHealthMonitor -Parameters @{ Dir = $dir } {
+            param($Dir)
+            Protect-WhmPath -Path $Dir
+            $left = @(Get-WhmUntrustedWriteAccess -Path $Dir)
+            $aclNow = & icacls.exe $Dir /T 2>&1 | Out-String
+            $left.Count | Should -Be 0 -Because "nothing untrusted should remain. ACL: $aclNow"
             $saved = $script:WhmModuleRoot
             try {
                 $script:WhmModuleRoot = $Dir
-                { Register-HealthMonitorTask -WhatIf -OutputPath (Join-Path -Path $Dir -ChildPath 'out') } | Should -Not -Throw -Because "ACL after setup: $AclNow"
+                { Register-HealthMonitorTask -WhatIf -OutputPath (Join-Path -Path $Dir -ChildPath 'out') } | Should -Not -Throw
             }
             finally {
                 $script:WhmModuleRoot = $saved
