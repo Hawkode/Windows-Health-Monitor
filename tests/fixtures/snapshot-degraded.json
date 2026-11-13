@@ -1,0 +1,88 @@
+{
+  "SchemaVersion": 1,
+  "TimestampUtc": "2026-11-13T10:00:00.0000000Z",
+  "ComputerName": "LAB-WS02",
+  "IsElevated": true,
+  "Cpu": {
+    "Percent": 40.0
+  },
+  "Memory": {
+    "TotalGB": 7.8,
+    "FreeGB": 0.78,
+    "UsedPercent": 90.0
+  },
+  "Disks": [
+    {
+      "Drive": "C:",
+      "SizeGB": 237.9,
+      "FreeGB": 7.1,
+      "FreePercent": 3.0
+    },
+    {
+      "Drive": "D:",
+      "SizeGB": 465.8,
+      "FreeGB": 55.9,
+      "FreePercent": 12.0
+    }
+  ],
+  "Uptime": {
+    "LastBootUtc": "2026-09-29T07:00:00.0000000Z",
+    "Days": 45.1
+  },
+  "Network": {
+    "PhysicalUp": 1,
+    "Adapters": [
+      "Ethernet"
+    ]
+  },
+  "TopProcesses": [
+    {
+      "Name": "MsMpEng",
+      "Id": 4120,
+      "WorkingSetMB": 310.2
+    }
+  ],
+  "Defender": {
+    "RunningMode": "Normal",
+    "AntivirusEnabled": true,
+    "RealTimeProtectionEnabled": false,
+    "TamperProtected": false,
+    "SignatureAgeDays": 9
+  },
+  "Firewall": [
+    {
+      "Profile": "Domain",
+      "Enabled": true
+    },
+    {
+      "Profile": "Private",
+      "Enabled": true
+    },
+    {
+      "Profile": "Public",
+      "Enabled": false
+    }
+  ],
+  "PendingReboot": {
+    "Pending": true,
+    "Reasons": [
+      "WindowsUpdate",
+      "PendingFileRename"
+    ]
+  },
+  "Patch": {
+    "LatestHotFixId": "KB5066001",
+    "LatestInstalledUtc": "2026-08-30T19:30:00.0000000Z",
+    "DaysSinceLastPatch": 75
+  },
+  "LogClear": {
+    "LookbackHours": 24,
+    "SecurityLogCleared": 1,
+    "OtherLogCleared": 0
+  },
+  "BitLocker": {
+    "Drive": "C:",
+    "ProtectionOn": false
+  },
+  "CollectorErrors": []
+}

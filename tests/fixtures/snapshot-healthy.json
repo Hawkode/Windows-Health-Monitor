@@ -1,0 +1,85 @@
+{
+  "SchemaVersion": 1,
+  "TimestampUtc": "2026-11-13T10:00:00.0000000Z",
+  "ComputerName": "LAB-WS01",
+  "IsElevated": true,
+  "Cpu": {
+    "Percent": 12.0
+  },
+  "Memory": {
+    "TotalGB": 15.7,
+    "FreeGB": 8.1,
+    "UsedPercent": 48.4
+  },
+  "Disks": [
+    {
+      "Drive": "C:",
+      "SizeGB": 476.3,
+      "FreeGB": 210.5,
+      "FreePercent": 44.2
+    },
+    {
+      "Drive": "D:",
+      "SizeGB": 931.5,
+      "FreeGB": 560.0,
+      "FreePercent": 60.1
+    }
+  ],
+  "Uptime": {
+    "LastBootUtc": "2026-11-10T08:12:00.0000000Z",
+    "Days": 3.08
+  },
+  "Network": {
+    "PhysicalUp": 1,
+    "Adapters": [
+      "Ethernet"
+    ]
+  },
+  "TopProcesses": [
+    {
+      "Name": "MsMpEng",
+      "Id": 4120,
+      "WorkingSetMB": 310.2
+    }
+  ],
+  "Defender": {
+    "RunningMode": "Normal",
+    "AntivirusEnabled": true,
+    "RealTimeProtectionEnabled": true,
+    "TamperProtected": true,
+    "SignatureAgeDays": 0
+  },
+  "Firewall": [
+    {
+      "Profile": "Domain",
+      "Enabled": true
+    },
+    {
+      "Profile": "Private",
+      "Enabled": true
+    },
+    {
+      "Profile": "Public",
+      "Enabled": true
+    }
+  ],
+  "PendingReboot": {
+    "Pending": false,
+    "Reasons": []
+  },
+  "Patch": {
+    "LatestHotFixId": "KB5070001",
+    "LatestInstalledUtc": "2026-11-04T19:30:00.0000000Z",
+    "DaysSinceLastPatch": 9
+  },
+  "LogClear": {
+    "LookbackHours": 24,
+    "SecurityLogCleared": 0,
+    "OtherLogCleared": 0
+  },
+  "BitLocker": {
+    "Drive": "C:",
+    "ProtectionOn": true
+  },
+  "CollectorErrors": []
+}

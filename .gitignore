@@ -1,0 +1,11 @@
+# Local threshold overrides
+*.local.psd1
+
+# Monitor output (host names, process names, security posture)
+output/
+health-*.jsonl
+health-*.csv
+
+# Pester output
+testResults.xml
+coverage.xml

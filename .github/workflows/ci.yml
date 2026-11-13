@@ -1,0 +1,56 @@
+name: ci
+on: [push, pull_request]
+
+# The jobs only read the code. Keep the workflow token read-only.
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    # A healthy run takes about a minute. Stop a hung run instead of waiting for the 6-hour default.
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Run PSScriptAnalyzer
+        shell: pwsh
+        run: |
+          # Pin the analyzer version so results do not change when the runner image updates.
+          $version = '1.23.0'
+          Install-Module PSScriptAnalyzer -RequiredVersion $version -Force -Scope CurrentUser
+          Import-Module PSScriptAnalyzer -RequiredVersion $version -Force
+          Write-Output "PowerShell $($PSVersionTable.PSVersion), PSScriptAnalyzer $version"
+          $r = Invoke-ScriptAnalyzer -Path . -Recurse -Settings ./PSScriptAnalyzerSettings.psd1
+          $r | Format-Table -AutoSize
+          if ($r) { exit 1 }
+
+  test:
+    # Collectors use Windows-only APIs, so tests run on Windows, in both editions.
+    runs-on: windows-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        shell: [powershell, pwsh]
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Run Pester (${{ matrix.shell }})
+        shell: ${{ matrix.shell }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          # Windows PowerShell 5.1 can default to old TLS versions for the Gallery.
+          [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+          $version = '5.9.1'
+          # SkipPublisherCheck: the inbox Pester 3.4 on Windows is signed by a different publisher.
+          Install-Module Pester -RequiredVersion $version -Force -Scope CurrentUser -SkipPublisherCheck
+          Import-Module Pester -RequiredVersion $version -Force
+          Write-Output "PowerShell $($PSVersionTable.PSVersion), Pester $version"
+          $config = New-PesterConfiguration
+          $config.Run.Path = './tests'
+          $config.Run.Exit = $true
+          $config.Output.Verbosity = 'Detailed'
+          Invoke-Pester -Configuration $config
